@@ -36,7 +36,7 @@ cd frontend
 npm run dev
 
 # Execute o comando "node seed.js" na raiz do projeto
-cd .. \n
+cd ..
 node seed.js
 
 # Efetue o login 
