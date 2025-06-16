@@ -1,4 +1,3 @@
-// src/components/Products.jsx
 import React, { useState, useEffect } from "react";
 import axiosInstance from "../utils/api";
 
@@ -17,10 +16,8 @@ const EmployeeProducts = () => {
   });
   const [loading, setLoading] = useState(false);
 
- 
   const userId = "dummy-user-id";
 
- 
   const fetchProducts = async () => {
     setLoading(true);
     try {
@@ -35,11 +32,12 @@ const EmployeeProducts = () => {
         setFilteredProducts(response.data.products);
       }
     } catch (error) {
-      alert(error.message);
+      alert("Erro ao buscar produtos: " + error.message);
     } finally {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     fetchProducts();
   }, []);
@@ -53,10 +51,15 @@ const EmployeeProducts = () => {
   };
 
   const handleChangeCategory = (e) => {
-    setFilteredProducts(
-      products.filter((product) => product.category._id === e.target.value)
-    );
-    setSelectedCategory(e.target.value);
+    const categoriaId = e.target.value;
+    setSelectedCategory(categoriaId);
+    if (categoriaId) {
+      setFilteredProducts(
+        products.filter((product) => product.category._id === categoriaId)
+      );
+    } else {
+      setFilteredProducts(products);
+    }
   };
 
   const handleOrderClick = (product) => {
@@ -70,17 +73,14 @@ const EmployeeProducts = () => {
     setIsModalOpen(true);
   };
 
-  const IncreaseQuantity = (e) => {
-    if (e.target.value > orderData.stock) {
-      alert("Not enough stock");
-    } else {
-      setOrderData((prev) => ({
-        ...prev,
-        quantity: parseInt(e.target.value),
-        total: parseInt(e.target.value) * parseInt(orderData.price),
-      }));
-    }
-  };
+const IncreaseQuantity = (e) => {
+  const novaQtd = parseInt(e.target.value);
+  setOrderData((prev) => ({
+    ...prev,
+    quantity: novaQtd,
+    total: novaQtd * parseInt(orderData.price),
+  }));
+};
 
   const handleOrderSubmit = async (e) => {
     e.preventDefault();
@@ -91,15 +91,14 @@ const EmployeeProducts = () => {
           Authorization: `Bearer ${localStorage.getItem("ims_token")}`,
         },
       });
-      console.log(response.data);
       if (response.data.success) {
         setIsModalOpen(false);
         setOrderData({ productId: "", quantity: 1, total: 0 });
         fetchProducts();
-        alert("order placed");
+        alert("Pedido realizado com sucesso");
       }
     } catch (err) {
-      alert(err.message);
+      alert("Erro ao realizar pedido: " + err.message);
     } finally {
       setLoading(false);
     }
@@ -118,7 +117,7 @@ const EmployeeProducts = () => {
           className="w-full sm:w-1/3 p-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={loading}
         >
-          <option value="">Selecionar Categoria</option>
+          <option value="">Todas as Categorias</option>
           {categories.map((category) => (
             <option key={category._id} value={category._id}>
               {category.name}
@@ -152,7 +151,7 @@ const EmployeeProducts = () => {
                 <td className="p-2">{index + 1}</td>
                 <td className="p-2">{product.name}</td>
                 <td className="p-2">{product.category.name}</td>
-                <td className="p-2">${product.price}</td>
+                <td className="p-2">R$ {product.price}</td>
                 <td className="p-2">{product.stock}</td>
                 <td className="p-2">
                   <button
@@ -168,14 +167,14 @@ const EmployeeProducts = () => {
           </tbody>
         </table>
         {filterProducts.length === 0 && !loading && (
-          <p className="text-center p-4 text-gray-500">Nenhum pedido encotrado.</p>
+          <p className="text-center p-4 text-gray-500">Nenhum produto encontrado.</p>
         )}
       </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-semibold mb-4">Fazer pedido</h2>
+            <h2 className="text-xl font-semibold mb-4">Fazer Pedido</h2>
             <form onSubmit={handleOrderSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -192,7 +191,7 @@ const EmployeeProducts = () => {
                 />
               </div>
               <div>
-                <strong>Total: {orderData.total}</strong>
+                <strong>Total: R$ {orderData.total}</strong>
               </div>
               <div className="flex gap-2">
                 <button
@@ -200,7 +199,7 @@ const EmployeeProducts = () => {
                   className="flex-1 bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 disabled:bg-green-300"
                   disabled={loading}
                 >
-                  Fazer pedido
+                  Confirmar
                 </button>
                 <button
                   type="button"

@@ -1,4 +1,3 @@
-// Categories.jsx
 import React, { useState, useEffect } from 'react';
 import axiosInstance from '../utils/api';
 
@@ -20,12 +19,10 @@ const Categories = () => {
       });
       if (response.data.success) {
         setCategories(response.data.categories);
-        setFilteredCategories(
-          response.data.categories
-        );
+        setFilteredCategories(response.data.categories);
       }
     } catch (error) {
-      alert(error.message);
+      alert("Erro ao buscar categorias: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -39,45 +36,40 @@ const Categories = () => {
     e.preventDefault();
     if (!formCategory.trim()) return;
 
-    if (editingId) {
-      try {
-        const response = await axiosInstance.put(`/category/${editingId}`, {formCategory, formDescription}, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("ims_token")}`,
-          },
-        });
+    const token = localStorage.getItem("ims_token");
+    const payload = { formCategory, formDescription };
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+
+    try {
+      if (editingId) {
+        const response = await axiosInstance.put(`/category/${editingId}`, payload, config);
         if (response.data.success) {
-            fetchCategories();
+          fetchCategories();
         }
         setEditingId(null);
-      } catch (error) {
-        alert(error.message)
-      }
-    } else {
-      
-      try {
-        const token = localStorage.getItem("ims_token");
-        const response = await axiosInstance.post("/category/add", {formCategory, formDescription}, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
+      } else {
+        const response = await axiosInstance.post("/category/add", payload, config);
         if (response.data.success) {
-            fetchCategories();
+          fetchCategories();
         }
-      } catch (error) {
-        alert(error.message);
       }
+    } catch (error) {
+      alert("Erro ao salvar categoria: " + error.message);
     }
-    
+
     setFormCategory('');
     setFormDescription('');
   };
 
   const handleSearchInput = (e) => {
+    const termo = e.target.value.toLowerCase();
     setFilteredCategories(
-      categories.filter((supplier) =>
-        supplier.name.toLowerCase().includes(e.target.value.toLowerCase())
+      categories.filter((cat) =>
+        cat.name.toLowerCase().includes(termo)
       )
     );
   };
@@ -90,16 +82,13 @@ const Categories = () => {
         },
       });
       if (response.data.success) {
-          setCategories((prev) => prev.filter((category) => category._id !== id));
-          setFilteredCategories((prev) => prev.filter((category) => category._id !== id));
+        setCategories((prev) => prev.filter((category) => category._id !== id));
+        setFilteredCategories((prev) => prev.filter((category) => category._id !== id));
       }
     } catch (error) {
-      if(error.response) {
-        alert(error.response.data.error);
-      } else {
-      alert(error.message)
+      const msg = error.response?.data?.error || error.message;
+      alert("Erro ao deletar categoria: " + msg);
     }
-    } 
   };
 
   const handleEdit = (category) => {
@@ -116,19 +105,18 @@ const Categories = () => {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Gerenciar categorias</h1>
-      
-      <div className="flex flex-col lg:flex-row gap-6">
+      <h1 className="text-2xl font-bold mb-4">Gerenciar Categorias</h1>
 
+      <div className="flex flex-col lg:flex-row gap-6">
         <div className="lg:w-1/3">
           <div className="bg-white p-4 rounded-lg shadow">
             <h2 className="text-lg font-semibold mb-4">
-              {editingId ? 'Editar Categoria' : 'Adicionar nova categoria'}
+              {editingId ? 'Editar Categoria' : 'Adicionar Nova Categoria'}
             </h2>
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome da categoria
+                  Nome da Categoria
                 </label>
                 <input
                   type="text"
@@ -156,7 +144,7 @@ const Categories = () => {
                   type="submit"
                   className={`flex-1 ${editingId ? 'bg-green-500 hover:bg-green-600' : 'bg-blue-500 hover:bg-blue-600'} text-white px-4 py-2 rounded-md`}
                 >
-                  {editingId ? 'Salvar' : 'Adicionar categoria'}
+                  {editingId ? 'Salvar' : 'Adicionar Categoria'}
                 </button>
                 {editingId && (
                   <button
@@ -216,7 +204,7 @@ const Categories = () => {
               </tbody>
             </table>
             {filteredCategories.length === 0 && (
-              <p className="text-center p-4 text-gray-500">Nenhuma categoria encontrada</p>
+              <p className="text-center p-4 text-gray-500">Nenhuma categoria encontrada.</p>
             )}
           </div>
         </div>

@@ -1,36 +1,36 @@
-import Product from "../models/Product.js";
-import Order from "../models/Order.js";
-
 const addOrder = async (req, res) => {
   try {
     const { productId, quantity, total } = req.body;
-    const userId = req.user._id;
-    const product = await Product.findById({_id: productId});
-    if (!product) return res.status(404).json({ error: 'Produto não encotrado' });
 
-    if(quantity > product.stock) {
-      return res.status(400).json({ error: 'Sem estoque suficiente' });
-    } else {
-      product.stock -= parseInt(quantity);
-      await product.save();
+    if (!req.user || !req.user._id) {
+      return res.status(401).json({ success: false, error: 'Usuário não autenticado' });
     }
-    
-    
+    const userId = req.user._id;
+
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ error: 'Produto não encontrado' });
+    }
+
+    product.stock += parseInt(quantity);
+    await product.save();
+
     const order = new Order({
       user: userId,
       product: productId,
       quantity,
       totalPrice: total
     });
+
     await order.save();
-    res
-      .status(201)
-      .json({ success: true, message: "Pedido criado com sucesso" });
+
+    res.status(201).json({ success: true, message: "Entrada registrada com sucesso" });
   } catch (error) {
-    
-    res.status(500).json({ success: false, error: "Server error" });
+    console.error("Erro em addOrder:", error);
+    res.status(500).json({ success: false, error: "Erro interno do servidor" });
   }
 };
+
 
 const getOrders = async (req, res) => {
   try {
@@ -60,7 +60,5 @@ const getOrders = async (req, res) => {
     return res.status(500).json({ success:false, error: 'Falha ao buscar pedidos' });
   }
 };
-
-
 
 export {addOrder, getOrders}

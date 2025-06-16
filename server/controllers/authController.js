@@ -2,28 +2,31 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User.js";
 
-
-
-export const login = async (req, res) => {
+export const authenticateUser = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Usuário não encontrado" });
+    const existingUser = await User.findOne({ email });
+    if (!existingUser) {
+      return res.status(404).json({
+        success: false,
+        message: "Conta não localizada",
+      });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res
-        .status(401)
-        .json({ success: false, message: "Credenciais inválidas" });
+    const passwordValid = await bcrypt.compare(password, existingUser.password);
+    if (!passwordValid) {
+      return res.status(401).json({
+        success: false,
+        message: "E-mail ou senha incorretos",
+      });
     }
 
-    const token = jwt.sign(
-      { userId: user._id, role: user.role },
+    const authToken = jwt.sign(
+      {
+        userId: existingUser._id,
+        role: existingUser.role,
+      },
       process.env.JWT_SECRET,
       {
         expiresIn: "5d",
@@ -32,34 +35,34 @@ export const login = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      message: "Login realzizado com sucesso",
-      token,
+      message: "Acesso autorizado",
+      token: authToken,
       user: {
-        userId: user._id,
-        email: user.email,
-        name: user.name,
-        role: user.role,
+        userId: existingUser._id,
+        name: existingUser.name,
+        email: existingUser.email,
+        role: existingUser.role,
       },
     });
-  } catch (error) {
+  } catch (err) {
     return res.status(500).json({
       success: false,
-      message: 'Server error',
+      message: "Erro ao autenticar",
     });
   }
 };
 
-export const verify = async (req, res) => {
+export const confirmUser = async (req, res) => {
   try {
     return res.status(200).json({
       success: true,
-      message: "Usuário vereficado",
+      message: "Usuário autenticado com sucesso",
       user: req.user,
     });
-  } catch(error) {
+  } catch (err) {
     return res.status(500).json({
       success: false,
-      message: 'Server error',
+      message: "Erro interno ao verificar usuário",
     });
   }
 };

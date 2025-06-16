@@ -1,4 +1,3 @@
-// Suppliers.jsx
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../utils/api";
 
@@ -7,6 +6,7 @@ const Suppliers = () => {
   const [filteredSuppliers, setFilteredSuppliers] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -17,6 +17,7 @@ const Suppliers = () => {
 
   const fetchSuppliers = async () => {
     setLoading(true);
+    setErrorMsg("");
     try {
       const response = await axiosInstance.get("/supplier", {
         headers: {
@@ -25,12 +26,10 @@ const Suppliers = () => {
       });
       if (response.data.success) {
         setSuppliers(response.data.suppliers);
-        setFilteredSuppliers(
-          response.data.suppliers
-        );
+        setFilteredSuppliers(response.data.suppliers);
       }
     } catch (error) {
-      alert(error.message);
+      setErrorMsg(error?.response?.data?.error || error.message);
     } finally {
       setLoading(false);
     }
@@ -47,6 +46,7 @@ const Suppliers = () => {
       )
     );
   };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -54,25 +54,29 @@ const Suppliers = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.name.trim()) return;
+    setErrorMsg("");
 
-    if (editingId) {
-      
-      try {
+    if (!formData.name.trim()) {
+      setErrorMsg("Nome é obrigatório");
+      return;
+    }
+
+    if (formData.email && !/\S+@\S+\.\S+/.test(formData.email)) {
+      setErrorMsg("Email inválido");
+      return;
+    }
+
+    try {
+      if (editingId) {
         const response = await axiosInstance.put(`/supplier/${editingId}`, formData, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("ims_token")}`,
           },
         });
         if (response.data.success) {
-            fetchSuppliers();
+          fetchSuppliers();
         }
-      } catch (error) {
-        alert(error.message)
-      } 
-    } else {
-     
-      try {
+      } else {
         const token = localStorage.getItem("ims_token");
         const response = await axiosInstance.post("/supplier/add", formData, {
           headers: {
@@ -80,16 +84,16 @@ const Suppliers = () => {
           },
         });
         if (response.data.success) {
-            fetchSuppliers();
+          fetchSuppliers();
         }
-      } catch (error) {
-        console.log(error);
-        alert(error.message);
       }
-    }
 
-    setFormData({ name: "", email: "", phone: "", address: "" });
-    setIsModalOpen(false);
+      setFormData({ name: "", email: "", phone: "", address: "" });
+      setEditingId(null);
+      setIsModalOpen(false);
+    } catch (error) {
+      setErrorMsg(error?.response?.data?.error || error.message);
+    }
   };
 
   const handleEdit = (supplier) => {
@@ -104,38 +108,40 @@ const Suppliers = () => {
   };
 
   const handleDelete = async (id) => {
+    setErrorMsg("");
     try {
-        const response = await axiosInstance.delete(`/supplier/${id}`, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem("ims_token")}`,
-          },
-        });
-        if (response.data.success) {
-            setSuppliers((prev) => prev.filter((supplier) => supplier._id !== id));
-            setFilteredSuppliers((prev) => prev.filter((supplier) => supplier._id !== id));
-        }
-      } catch (error) {
-        if(error.response) {
-          alert(error.response.data.error);
-        } else {
-        alert(error.message)
+      const response = await axiosInstance.delete(`/supplier/${id}`, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("ims_token")}`,
+        },
+      });
+      if (response.data.success) {
+        setSuppliers((prev) => prev.filter((supplier) => supplier._id !== id));
+        setFilteredSuppliers((prev) => prev.filter((supplier) => supplier._id !== id));
       }
-      } 
+    } catch (error) {
+      setErrorMsg(error?.response?.data?.error || error.message);
+    }
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
     setEditingId(null);
     setFormData({ name: "", email: "", phone: "", address: "" });
+    setErrorMsg("");
   };
 
-  if(loading) {
-    return <div>Carregando ....</div>
+  if (loading) {
+    return <div>Carregando ....</div>;
   }
 
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Gerenciar Fornecedores</h1>
+
+      {errorMsg && (
+        <div className="bg-red-100 text-red-700 p-2 rounded mb-4">{errorMsg}</div>
+      )}
 
       <div className="flex flex-col sm:flex-row justify-between items-center mb-6 gap-4">
         <div className="w-full sm:w-1/3">
@@ -168,7 +174,7 @@ const Suppliers = () => {
           </thead>
           <tbody>
             {filteredSuppliers.map((supplier, index) => (
-              <tr key={index} className="border-t">
+              <tr key={supplier._id} className="border-t">
                 <td className="p-2">{index + 1}</td>
                 <td className="p-2">{supplier.name}</td>
                 <td className="p-2">{supplier.email}</td>
@@ -193,16 +199,25 @@ const Suppliers = () => {
           </tbody>
         </table>
         {filteredSuppliers.length === 0 && (
-          <p className="text-center p-4 text-gray-500">Nenhum fornecedor encontrado</p>
+          <p className="text-center p-4 text-gray-500">
+            Nenhum fornecedor encontrado
+          </p>
         )}
       </div>
 
       {isModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 w-full max-w-md">
             <h2 className="text-xl font-semibold mb-4">
               {editingId ? "Editar fornecedor" : "Adicionar novo fornecedor"}
             </h2>
+
+            {errorMsg && (
+              <div className="bg-red-100 text-red-700 p-2 rounded mb-2">
+                {errorMsg}
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

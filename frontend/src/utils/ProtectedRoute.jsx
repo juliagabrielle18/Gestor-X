@@ -16,9 +16,9 @@ const ProtectedRoute = ({ children, requiredRole }) => {
       navigate("/unauthorized", { replace: true });
       return;
     }
-  }, [user, navigate, requiredRole]); // Added dependencies
+  }, [user, navigate, requiredRole]); 
   
-  // Early returns instead of storing in variable
+ 
   if (!user) return null;
   if (!requiredRole.includes(user.role)) return null;
   

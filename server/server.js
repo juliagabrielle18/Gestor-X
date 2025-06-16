@@ -25,5 +25,5 @@ app.use("/api/order", orderRouter);
 
 app.listen(process.env.PORT, () => {
 	connectToMongoDB();
-	console.log(`Server Running on port ${process.env.PORT}`);
+	console.log(`Servidor rodando na porta ${process.env.PORT}`);
 });

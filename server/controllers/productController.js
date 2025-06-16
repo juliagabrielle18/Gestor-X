@@ -18,7 +18,7 @@ const addProduct = async (req, res) => {
       .json({ success: true, message: "Produto criado com sucesso" });
   } catch (error) {
     console.error(error.message);
-    res.status(500).json({ success: false, error: "Server error" });
+    res.status(500).json({ success: false, error: "Erro de servidor" });
   }
 };
 
@@ -31,7 +31,7 @@ const getProducts = async (req, res) => {
   } catch (error) {
     res
       .status(500)
-      .json({ success: false, error: "Server error " + error.message });
+      .json({ success: false, error: "Erro de servidor" + error.message });
   }
 };
 
@@ -42,7 +42,7 @@ const updateProduct = async (req, res) => {
 
     const product = await Product.findById({ _id: id });
     if (!product) {
-      res.status(404).json({ success: false, error: "Product não encotrado" });
+      res.status(404).json({ success: false, error: "Produto não encotrado" });
     }
 
     const updateUser = await Product.findByIdAndUpdate(
@@ -52,10 +52,10 @@ const updateProduct = async (req, res) => {
 
     res.status(201).json({ success: true, updateUser });
   } catch (error) {
-    console.error("Error editing employee:", error);
+    console.error("Erro ao editar:", error);
     res
       .status(500)
-      .json({ success: false, error: "Server error " + error.message });
+      .json({ success: false, error: "Erro de servidor" + error.message });
   }
 };
 
@@ -65,12 +65,12 @@ const deleteProduct = async (req, res) => {
 
     const product = await Product.findById({ _id: id });
     if (!product) {
-      return res.status(404).json({ success:false, error: 'Product não encotrado' });
+      return res.status(404).json({ success:false, error: 'Produto não encotrado' });
     }
 
 
     if (product.isDeleted) {
-      return res.status(400).json({ success:false, error: 'Product ja foi deletado' });
+      return res.status(400).json({ success:false, error: 'Produto ja foi deletado' });
     }
 
     await Product.updateOne(
@@ -80,10 +80,10 @@ const deleteProduct = async (req, res) => {
 
     return res.status(201).json({ success: true, product });
   } catch (error) {
-    console.error("Error deleting product:", error);
+    console.error("Erro ao deletar produto:", error);
     return res
       .status(500)
-      .json({ success: false, error: "Server error " + error.message });
+      .json({ success: false, error: "Erro de servidor " + error.message });
   }
 };
 

@@ -13,7 +13,7 @@ const register = async () => {
     
     const existingUser = await User.findOne({ email: "admin@gmail.com" });
     if (existingUser) {
-      console.log("Admin already exists.");
+      console.log("Admin já  existe.");
       return;
     }
 
@@ -27,9 +27,9 @@ const register = async () => {
     });
 
     await newUser.save();
-    console.log("Admin created");
+    console.log("Admin criado");
   } catch (err) {
-    console.error("Error creating admin:", err);
+    console.error("Error ao criar admin:", err);
   }
 };
 
