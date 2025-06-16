@@ -3,8 +3,6 @@
 /server/node_modules
 
 # Ignore environment variables
-/frontend/.env
-/server/.env
 
 # Ignore build or dist folders (if any)
 /frontend/build
